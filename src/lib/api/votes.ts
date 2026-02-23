@@ -22,10 +22,11 @@ export async function upsertVote(
 ): Promise<void> {
 	try {
 		// 1. Cerca voto esistente dell'utente per questa claim
+		// Nota: usiamo user_updated perché si popola automaticamente sia on create che on update
 		const existingVotes = await directus.request(
 			readItems('votes', {
 				filter: {
-					claim_id: { _eq: claimId },
+					claim_id: { _eq: Number(claimId) },
 					...(userId ? { user_updated: { _eq: userId } } : {})
 				},
 				limit: 1
@@ -35,6 +36,8 @@ export async function upsertVote(
 		if (existingVotes.length > 0) {
 			// 2. Aggiorna voto esistente
 			const existingVote = existingVotes[0];
+			if (!existingVote.id) throw new Error('Vote ID missing');
+			
 			await directus.request(
 				updateItem('votes', existingVote.id, {
 					[dimension]: value,
@@ -48,7 +51,7 @@ export async function upsertVote(
 			// 3. Crea nuovo voto
 			await directus.request(
 				createItem('votes', {
-					claim_id: claimId,
+					claim_id: Number(claimId),
 					accuracy: dimension === 'accuracy' ? value : 0,
 					relevance: dimension === 'relevance' ? value : 0
 				})
@@ -63,12 +66,12 @@ export async function upsertVote(
 /**
  * Ottieni i voti aggregati per una claim
  */
-export async function getClaimVotes(claimId: string) {
+export async function getClaimVotes(claimId: string | number) {
 	try {
 		const votes = await directus.request(
 			readItems('votes', {
 				filter: {
-					claim_id: { _eq: claimId }
+					claim_id: { _eq: Number(claimId) }
 				}
 			})
 		);
@@ -85,6 +88,39 @@ export async function getClaimVotes(claimId: string) {
 		return aggregated;
 	} catch (error) {
 		console.error('Error getting claim votes:', error);
+		throw error;
+	}
+}
+
+/**
+ * Ottieni i voti aggregati per multipli claims (più efficiente)
+ */
+export async function getMultipleClaimVotes(claimIds: (string | number)[]): Promise<Map<string, { accuracy: number; relevance: number }>> {
+	try {
+		const votes = await directus.request(
+			readItems('votes', {
+				filter: {
+					claim_id: { _in: claimIds.map(Number) }
+				}
+			})
+		);
+
+		// Aggrega i voti per claim_id
+		const votesByClaimId = new Map<string, { accuracy: number; relevance: number }>();
+		
+		votes.forEach(vote => {
+			const claimId = String(vote.claim_id);
+			const existing = votesByClaimId.get(claimId) || { accuracy: 0, relevance: 0 };
+			
+			votesByClaimId.set(claimId, {
+				accuracy: existing.accuracy + (vote.accuracy || 0),
+				relevance: existing.relevance + (vote.relevance || 0)
+			});
+		});
+
+		return votesByClaimId;
+	} catch (error) {
+		console.error('Error getting multiple claim votes:', error);
 		throw error;
 	}
 }

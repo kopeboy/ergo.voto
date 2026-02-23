@@ -15,6 +15,7 @@ const userVotesStore = writable<Map<string, UserVote>>(new Map());
 
 /**
  * Carica tutti i voti dell'utente corrente (chiamare al login)
+ * Nota: usiamo user_updated perché si popola automaticamente sia on create che on update
  */
 export async function loadUserVotes() {
 	try {

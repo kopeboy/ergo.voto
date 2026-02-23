@@ -48,26 +48,42 @@ Sviluppare un prototipo funzionale di piattaforma per dibattiti gerarchici in po
    - SDK Directus installato e configurato
    - Guide per setup manuale e permessi
 
-### 🔄 In Corso
+### ✅ Completati (continua)
 4. **Configurazione Directus**
-   - [ ] Creare collezioni `claims` e `votes` manualmente (vedi `DIRECTUS_SETUP.md`)
-   - [ ] Configurare Access Policies per autenticazione (vedi `DIRECTUS_PERMISSIONS.md`)
-   - [ ] Generare tipi TypeScript da schema: `npm run types:generate`
+   - ✅ Collezioni `claims` e `votes` create manualmente
+   - ✅ Generazione tipi TypeScript automatizzata con `directus-typescript-gen`
+   - ✅ Client Directus configurato con tipi generati
+   - ✅ Access Policies configurate e testate
+     - Lettura pubblica: funzionante
+     - Creazione autenticata: funzionante
+     - Voti autenticati: funzionante
 
-### ⏳ Prossimi Step
-5. **Integrazione Frontend-Backend**
-   - [ ] Sostituire dati mock con chiamate API Directus
+### ✅ Completato
+5. **Integrazione Frontend-Backend - Fase 1**
+   - ✅ Collezione `debates` creata in Directus
+   - ✅ Campo `debate_id` aggiunto a `claims` (relazione M2O)
+   - ✅ Permessi configurati per ruolo "Pro User"
+   - ✅ Campi `user_updated`/`date_updated` configurati per popolarsi alla creazione
+   - ✅ API helpers creati (`src/lib/api/claims.ts`, `votes.ts`, `debates.ts`, `index.ts`)
+   - ✅ Pagina dibattito filtra claims per `debate_id`
+   - ✅ Caricamento ricorsivo claims con voti aggregati
+   - ✅ Stati loading/error/empty gestiti
+   - ✅ Dati di test creati (2 debates con claims)
+
+### 🔄 In Corso
+6. **Autenticazione e Voti**
    - [ ] Implementare autenticazione (login/logout)
    - [ ] Integrare `voteWithCache()` con backend reale
    - [ ] Caricare voti utente al login con `loadUserVotes()`
-   - [ ] Aggregare voti per visualizzazione contatori
+   - [ ] Abilitare votazione con aggiornamento ottimistico
 
-6. **Form Creazione Claims**
-   - [ ] Form per nuovi claim con `parent_id` nascosto
+7. **Form Creazione Debates e Claims**
+   - [ ] Form creazione debate (solo Pro User)
+   - [ ] Form per nuovi claim con `debate_id` e `parent_id`
    - [ ] Validazione lato client
    - [ ] Submit a Directus con autenticazione
 
-7. **Ottimizzazioni & Deploy**
+8. **Ottimizzazioni & Deploy**
    - [ ] Setup automazioni AI in Directus (moderazione)
    - [ ] Configurazione cache HTTP
    - [ ] Preparazione Docker per VPS

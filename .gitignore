@@ -24,3 +24,6 @@ vite.config.ts.timestamp-*
 
 # Docker
 /data
+
+# Directus
+directus-spec.json

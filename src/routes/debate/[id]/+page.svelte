@@ -1,14 +1,47 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import ClaimNode from '$lib/components/ClaimNode.svelte';
 	import type { Claim, VoteDimension } from '$lib/types';
-	import { mockDebateData } from '$lib/mockData';
+	import { getDebateTree } from '$lib/api';
+	import { upsertVote } from '$lib/api/votes';
 
-	let debateId = $page.params.id;
-	let claims: Claim[] = mockDebateData;
+	let debateId = $page.params.id || '1';
+	let claims: Claim[] = [];
+	let loading = true;
+	let error: string | null = null;
 
-	const handleVote = (claimId: string, dimension: VoteDimension, value: number) => {
-		claims = updateVoteRecursive(claims, claimId, dimension, value);
+	// Carica i dati dal backend
+	onMount(async () => {
+		try {
+			loading = true;
+			claims = await getDebateTree(debateId);
+		} catch (err) {
+			console.error('Error loading debate:', err);
+			error = 'Errore nel caricamento del dibattito. Riprova più tardi.';
+		} finally {
+			loading = false;
+		}
+	});
+
+	const handleVote = async (claimId: string, dimension: VoteDimension, value: number) => {
+		// TODO: Per ora i voti richiedono autenticazione
+		// Mostra messaggio all'utente invece di aggiornamento ottimistico
+		alert('Per votare devi effettuare il login. Funzionalità in arrivo!');
+		return;
+
+		// Codice per quando avremo l'autenticazione:
+		// Aggiornamento ottimistico locale
+		// claims = updateVoteRecursive(claims, claimId, dimension, value);
+		
+		// Salva sul backend
+		// try {
+		// 	await upsertVote(claimId, dimension, value);
+		// } catch (err) {
+		// 	console.error('Error saving vote:', err);
+		// 	claims = updateVoteRecursive(claims, claimId, dimension, -value);
+		// 	alert('Errore nel salvataggio del voto. Riprova.');
+		// }
 	};
 
 	function updateVoteRecursive(claimsList: Claim[], targetId: string, dimension: VoteDimension, value: number): Claim[] {
@@ -45,11 +78,26 @@
 		</p>
 	</header>
 
-	<div class="claims-tree">
-		{#each claims as claim (claim.id)}
-			<ClaimNode {claim} depth={0} onVote={handleVote} />
-		{/each}
-	</div>
+	{#if loading}
+		<div class="loading">
+			<p>Caricamento dibattito...</p>
+		</div>
+	{:else if error}
+		<div class="error">
+			<p>{error}</p>
+		</div>
+	{:else if claims.length === 0}
+		<div class="empty">
+			<p>Nessun claim pubblicato in questo dibattito.</p>
+			<p class="text-sm text-gray-600">Sii il primo a contribuire!</p>
+		</div>
+	{:else}
+		<div class="claims-tree">
+			{#each claims as claim (claim.id)}
+				<ClaimNode {claim} depth={0} onVote={handleVote} />
+			{/each}
+		</div>
+	{/if}
 
 	<div class="info-panel">
 		<h3 class="info-title">Come funziona il voto multi-dimensionale?</h3>
@@ -91,6 +139,25 @@
 
 	.claims-tree {
 		margin-bottom: 2rem;
+	}
+
+	.loading, .error, .empty {
+		text-align: center;
+		padding: 3rem 1rem;
+		color: #6b7280;
+	}
+
+	.error {
+		color: #dc2626;
+		background: #fef2f2;
+		border: 1px solid #fecaca;
+		border-radius: 0.5rem;
+	}
+
+	.empty {
+		background: #f9fafb;
+		border: 1px solid #e5e7eb;
+		border-radius: 0.5rem;
 	}
 
 	.info-panel {

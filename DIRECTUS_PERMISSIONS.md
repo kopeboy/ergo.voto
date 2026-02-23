@@ -70,6 +70,7 @@ Directus 11 usa **Access Policies** invece di Access Control. Ecco come configur
    - **Operator**: `equals`
    - **Value**: `$CURRENT_USER`
    - Questo permette agli utenti di modificare i propri voti esistenti
+   - **Nota**: `user_updated` si popola automaticamente sia on create che on update, quindi identifica sempre chi ha votato
 5. **Delete**: ❌ **No Access**
 
 ---

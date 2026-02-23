@@ -28,8 +28,8 @@
 			<span class="claim-type-badge {claim.type === 'pro' ? 'bg-green-600' : 'bg-red-600'}">
 				{claim.type === 'pro' ? 'PRO' : 'CONTRO'}
 			</span>
-			{#if claim.user_created}
-				<span class="text-sm text-gray-600">@{claim.user_created}</span>
+			{#if claim.user_updated}
+				<span class="claim-author">da {claim.user_updated.substring(0, 8)}...</span>
 			{/if}
 		</div>
 
