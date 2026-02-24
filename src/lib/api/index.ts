@@ -65,4 +65,4 @@ function populateVotes(
 // Re-export delle funzioni utili
 export { getRootClaims, getClaimTree } from './claims';
 export { upsertVote, getClaimVotes, getUserVote } from './votes';
-export { voteWithCache, loadUserVotes, clearVotesCache } from '$lib/stores/votes';
+export { voteWithCache, loadUserVotesForClaims, clearVotesCache } from '$lib/stores/votes';

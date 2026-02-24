@@ -27,5 +27,6 @@ services:
       DB_PASSWORD: "password"
       # Permette di connettersi dal frontend locale
       CORS_ENABLED: "true"
-      CORS_ORIGIN: "true"
+      CORS_ORIGIN: "http://localhost:5173"
+      CORS_CREDENTIALS: "true"
       AUTH_DISABLE_DEFAULT_ADMIN_ROLE_CHECK: "true"

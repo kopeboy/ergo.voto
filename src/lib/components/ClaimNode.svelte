@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Claim, VoteDimension } from '$lib/types';
+	import { userVotesStore } from '$lib/stores/votes';
 
 	export let claim: Claim;
 	export let depth: number = 0;
@@ -16,6 +17,13 @@
 	const getTypeBg = (type: string) => {
 		return type === 'pro' ? 'bg-green-50' : 'bg-red-50';
 	};
+
+	// Reactive: calcola lo stato dei voti per questo claim
+	$: userVote = $userVotesStore.get(claim.id);
+	$: accuracyUpvoted = userVote?.accuracy === 1;
+	$: accuracyDownvoted = userVote?.accuracy === -1;
+	$: relevanceUpvoted = userVote?.relevance === 1;
+	$: relevanceDownvoted = userVote?.relevance === -1;
 </script>
 
 <div class="claim-container" style="margin-left: {depth * 24}px">
@@ -42,7 +50,7 @@
 				<span class="dimension-label">Accuratezza</span>
 				<div class="vote-buttons">
 					<button 
-						class="vote-btn upvote" 
+						class="vote-btn upvote {accuracyUpvoted ? 'voted' : ''}" 
 						on:click={() => handleVote('accuracy', 1)}
 						aria-label="Upvote accuracy"
 					>
@@ -50,7 +58,7 @@
 					</button>
 					<span class="vote-count">{claim.votes.accuracy}</span>
 					<button 
-						class="vote-btn downvote" 
+						class="vote-btn downvote {accuracyDownvoted ? 'voted' : ''}" 
 						on:click={() => handleVote('accuracy', -1)}
 						aria-label="Downvote accuracy"
 					>
@@ -63,7 +71,7 @@
 				<span class="dimension-label">Rilevanza</span>
 				<div class="vote-buttons">
 					<button 
-						class="vote-btn upvote" 
+						class="vote-btn upvote {relevanceUpvoted ? 'voted' : ''}" 
 						on:click={() => handleVote('relevance', 1)}
 						aria-label="Upvote relevance"
 					>
@@ -71,7 +79,7 @@
 					</button>
 					<span class="vote-count">{claim.votes.relevance}</span>
 					<button 
-						class="vote-btn downvote" 
+						class="vote-btn downvote {relevanceDownvoted ? 'voted' : ''}" 
 						on:click={() => handleVote('relevance', -1)}
 						aria-label="Downvote relevance"
 					>
@@ -79,14 +87,17 @@
 					</button>
 				</div>
 			</div>
-
 		</div>
 	</div>
 
 	{#if claim.children && claim.children.length > 0}
 		<div class="children">
 			{#each claim.children as child (child.id)}
-				<svelte:self claim={child} depth={depth + 1} {onVote} />
+				<svelte:self 
+					claim={child} 
+					depth={depth + 1} 
+					{onVote}
+				/>
 			{/each}
 		</div>
 	{/if}
@@ -186,6 +197,16 @@
 
 	.vote-btn.downvote:hover {
 		color: #ef4444;
+	}
+
+	.vote-btn.upvote.voted {
+		color: #10b981;
+		font-weight: bold;
+	}
+
+	.vote-btn.downvote.voted {
+		color: #ef4444;
+		font-weight: bold;
 	}
 
 	.vote-count {

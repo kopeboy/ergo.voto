@@ -80,11 +80,16 @@ Sviluppare un prototipo funzionale di piattaforma per dibattiti gerarchici in po
    - ✅ Rollback automatico su errore
    - ✅ Pagina lista dibattiti (/debates)
 
-### 🔄 In Corso
+### ✅ Completato (continua)
 7. **Ottimizzazioni Voti**
-   - [ ] Caricare voti utente per claims visibili
-   - [ ] Mostrare quali claims l'utente ha già votato
-   - [ ] Integrare vote caching ottimizzato
+   - ✅ Caricare voti utente per claims visibili (solo pagina corrente)
+   - ✅ Mostrare quali claims l'utente ha già votato (frecce colorate)
+   - ✅ Integrare vote caching ottimizzato (SvelteMap reattivo)
+   - ✅ Aggiornamento ottimistico UI con rollback su errore
+   - ✅ Toggle voti (cliccare stesso voto lo rimuove)
+   - ✅ Token refresh automatico ogni 14.5 minuti
+
+### 🔄 In Corso
 
 8. **Form Creazione Debates e Claims**
    - [ ] Form creazione debate (solo Pro User)
@@ -92,7 +97,14 @@ Sviluppare un prototipo funzionale di piattaforma per dibattiti gerarchici in po
    - [ ] Validazione lato client
    - [ ] Submit a Directus con autenticazione
 
-9. **Ottimizzazioni & Deploy**
+9. **OAuth/SSO (Produzione)**
+   - [ ] Setup Google OAuth (richiede dominio ergo.voto)
+   - [ ] Setup Apple Sign In (richiede dominio verificato)
+   - [ ] Setup Meta/Facebook Login (richiede dominio pubblico)
+   - [ ] Implementare callback page `/auth/callback`
+   - [ ] Aggiungere bottoni OAuth in AuthModal
+
+10. **Ottimizzazioni & Deploy**
    - [ ] Setup automazioni AI in Directus (moderazione)
    - [ ] Configurazione cache HTTP
    - [ ] Preparazione Docker per VPS
@@ -104,6 +116,11 @@ Sviluppare un prototipo funzionale di piattaforma per dibattiti gerarchici in po
 - **Solo utenti autenticati** possono creare claims e votare
 - No voti anonimi (prevenzione spam/bot)
 - Permessi gestiti tramite Access Policies in Directus
+- **Token refresh automatico**: sessione rinnovata ogni 10 minuti (token scade dopo 15)
+- **OAuth/SSO**: Google, Apple, Meta richiedono dominio pubblico (non localhost)
+  - Google Cloud Console: permette localhost in dev, ma meglio testare in produzione
+  - Apple Sign In: richiede dominio verificato (no localhost)
+  - Meta/Facebook: permette localhost solo per app in modalità sviluppo
 
 ### Performance
 - Cache locale voti: 1 query iniziale + 0 query per voto

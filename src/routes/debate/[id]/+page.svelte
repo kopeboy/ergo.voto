@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import { getDebateTree } from '$lib/api';
+	import { voteWithCache, loadUserVotesForClaims } from '$lib/stores/votes';
+	import { userVotesStore } from '$lib/stores/votes';
 	import ClaimNode from '$lib/components/ClaimNode.svelte';
 	import type { Claim, VoteDimension } from '$lib/types';
-	import { getDebateTree } from '$lib/api';
-	import { upsertVote } from '$lib/api/votes';
 	import { auth } from '$lib/stores/auth';
 
 	let debateId = $page.params.id || '1';
@@ -12,14 +13,35 @@
 	let loading = true;
 	let error: string | null = null;
 
+	// Funzione ricorsiva per estrarre tutti gli ID delle claim
+	function extractAllClaimIds(claimsList: Claim[]): string[] {
+		const ids: string[] = [];
+		for (const claim of claimsList) {
+			ids.push(claim.id);
+			if (claim.children?.length) {
+				ids.push(...extractAllClaimIds(claim.children));
+			}
+		}
+		return ids;
+	}
+
 	// Carica i dati dal backend
 	onMount(async () => {
 		try {
 			loading = true;
-			claims = await getDebateTree(debateId);
+			const tree = await getDebateTree(debateId);
+			claims = tree;
+			
+			// Se l'utente è loggato, carica i suoi voti per le claim visibili
+			if ($auth.user && claims.length > 0) {
+				const claimIds = extractAllClaimIds(claims);
+				await loadUserVotesForClaims(claimIds);
+			}
+			
+			error = null;
 		} catch (err) {
-			console.error('Error loading debate:', err);
-			error = 'Errore nel caricamento del dibattito. Riprova più tardi.';
+			error = 'Errore nel caricamento del dibattito';
+			console.error(err);
 		} finally {
 			loading = false;
 		}
@@ -32,16 +54,22 @@
 			return;
 		}
 
-		// Aggiornamento ottimistico locale
-		claims = updateVoteRecursive(claims, claimId, dimension, value);
-		
+		// Calcola delta ottimistico basato sulla cache dei voti utente
+		const userVote = $userVotesStore.get(claimId);
+		const currentValue = userVote?.[dimension] || 0;
+		const optimisticFinalValue = currentValue === value ? 0 : value;
+		const optimisticDelta = optimisticFinalValue - currentValue;
+
+		// Aggiornamento ottimistico UI
+		claims = updateVoteRecursive(claims, claimId, dimension, optimisticDelta);
+
 		// Salva sul backend
 		try {
-			await upsertVote(claimId, dimension, value);
+			await voteWithCache(claimId, dimension, value);
 		} catch (err) {
 			console.error('Error saving vote:', err);
-			// Rollback ottimistico in caso di errore
-			claims = updateVoteRecursive(claims, claimId, dimension, -value);
+			// Rollback ottimistico
+			claims = updateVoteRecursive(claims, claimId, dimension, -optimisticDelta);
 			alert('Errore nel salvataggio del voto. Riprova.');
 		}
 	};
@@ -101,7 +129,11 @@
 	{:else}
 		<div class="claims-tree">
 			{#each claims as claim (claim.id)}
-				<ClaimNode {claim} depth={0} onVote={handleVote} />
+				<ClaimNode 
+					{claim} 
+					depth={0} 
+					onVote={handleVote}
+				/>
 			{/each}
 		</div>
 	{/if}

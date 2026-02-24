@@ -19,7 +19,7 @@ export async function upsertVote(
 	dimension: VoteDimension,
 	value: number,
 	userId?: string
-): Promise<void> {
+): Promise<{ finalValue: number; delta: number }> {
 	try {
 		// 1. Cerca voto esistente dell'utente per questa claim
 		// Nota: usiamo user_updated perché si popola automaticamente sia on create che on update
@@ -38,15 +38,22 @@ export async function upsertVote(
 			const existingVote = existingVotes[0];
 			if (!existingVote.id) throw new Error('Vote ID missing');
 			
+			const currentValue = existingVote[dimension] || 0;
+			
+			// Se l'utente vota di nuovo nella stessa direzione, rimuovi il voto (toggle)
+			// Altrimenti, sostituisci con il nuovo voto
+			const finalValue = currentValue === value ? 0 : value;
+			const delta = finalValue - currentValue;
+			
+			// Aggiorna solo la dimensione votata, l'altra rimane invariata
+			// user_updated viene gestito automaticamente da Directus
 			await directus.request(
 				updateItem('votes', existingVote.id, {
-					[dimension]: value,
-					// Gli altri campi rimangono invariati
-					...(dimension === 'accuracy' 
-						? { relevance: existingVote.relevance } 
-						: { accuracy: existingVote.accuracy })
+					[dimension]: finalValue
 				})
 			);
+			
+			return { finalValue, delta };
 		} else {
 			// 3. Crea nuovo voto
 			await directus.request(
@@ -56,6 +63,7 @@ export async function upsertVote(
 					relevance: dimension === 'relevance' ? value : 0
 				})
 			);
+			return { finalValue: value, delta: value };
 		}
 	} catch (error) {
 		console.error('Error upserting vote:', error);
