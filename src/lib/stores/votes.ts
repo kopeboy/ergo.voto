@@ -86,7 +86,7 @@ export async function voteWithCache(
 			// Aggiungi alla cache locale
 			const newVotesMap = new Map(currentVotes);
 			newVotesMap.set(claimId, {
-				id: newVote.id,
+				id: String(newVote.id),
 				claim_id: claimId,
 				accuracy: newVote.accuracy || 0,
 				relevance: newVote.relevance || 0

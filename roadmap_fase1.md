@@ -70,20 +70,29 @@ Sviluppare un prototipo funzionale di piattaforma per dibattiti gerarchici in po
    - ✅ Stati loading/error/empty gestiti
    - ✅ Dati di test creati (2 debates con claims)
 
-### 🔄 In Corso
+### ✅ Completato (continua)
 6. **Autenticazione e Voti**
-   - [ ] Implementare autenticazione (login/logout)
-   - [ ] Integrare `voteWithCache()` con backend reale
-   - [ ] Caricare voti utente al login con `loadUserVotes()`
-   - [ ] Abilitare votazione con aggiornamento ottimistico
+   - ✅ Store autenticazione con Directus SDK
+   - ✅ Componente Header con login/logout
+   - ✅ Modal di login con gestione errori
+   - ✅ Verifica autenticazione prima di votare
+   - ✅ Votazione con aggiornamento ottimistico
+   - ✅ Rollback automatico su errore
+   - ✅ Pagina lista dibattiti (/debates)
 
-7. **Form Creazione Debates e Claims**
+### 🔄 In Corso
+7. **Ottimizzazioni Voti**
+   - [ ] Caricare voti utente per claims visibili
+   - [ ] Mostrare quali claims l'utente ha già votato
+   - [ ] Integrare vote caching ottimizzato
+
+8. **Form Creazione Debates e Claims**
    - [ ] Form creazione debate (solo Pro User)
    - [ ] Form per nuovi claim con `debate_id` e `parent_id`
    - [ ] Validazione lato client
    - [ ] Submit a Directus con autenticazione
 
-8. **Ottimizzazioni & Deploy**
+9. **Ottimizzazioni & Deploy**
    - [ ] Setup automazioni AI in Directus (moderazione)
    - [ ] Configurazione cache HTTP
    - [ ] Preparazione Docker per VPS

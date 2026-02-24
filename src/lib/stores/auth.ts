@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 import { directus } from '$lib/directus';
-import { authentication, login, logout, readMe } from '@directus/sdk';
+import { readMe } from '@directus/sdk';
 
 interface User {
 	id: string;
@@ -60,10 +60,8 @@ function createAuthStore() {
 			update(state => ({ ...state, loading: true, error: null }));
 
 			try {
-				// Login con Directus SDK
-				await directus.request(
-					login({ email, password })
-				);
+				// Login usando il metodo diretto del client (come da docs ufficiali)
+				await directus.login({ email, password });
 
 				// Carica i dati dell'utente
 				const user = await directus.request(readMe());
@@ -82,7 +80,7 @@ function createAuthStore() {
 
 				return true;
 			} catch (error) {
-				const errorMessage = error instanceof Error ? error.message : 'Login fallito';
+				const errorMessage = error instanceof Error ? error.message : 'Email o password non corretti';
 				set({ user: null, loading: false, error: errorMessage });
 				return false;
 			}
@@ -95,7 +93,7 @@ function createAuthStore() {
 			update(state => ({ ...state, loading: true, error: null }));
 
 			try {
-				await directus.request(logout());
+				await directus.logout();
 				set({ user: null, loading: false, error: null });
 			} catch (error) {
 				// Anche se il logout fallisce, rimuoviamo l'utente localmente

@@ -46,8 +46,11 @@
 		}
 	};
 
+	// Aggiorna il voto di un claim specifico nell'albero
+	// La ricorsione serve solo per trovare il claim, non per applicare il voto ai figli
 	function updateVoteRecursive(claimsList: Claim[], targetId: string, dimension: VoteDimension, value: number): Claim[] {
 		return claimsList.map(claim => {
+			// Trovato il claim target - aggiorna solo questo
 			if (claim.id === targetId) {
 				return {
 					...claim,
@@ -57,12 +60,14 @@
 					}
 				};
 			}
-			if (claim.children && claim.children.length > 0) {
+			// Non è il target - cerca nei figli se esistono
+			if (claim.children?.length) {
 				return {
 					...claim,
 					children: updateVoteRecursive(claim.children, targetId, dimension, value)
 				};
 			}
+			// Non è il target e non ha figli - restituisci invariato
 			return claim;
 		});
 	}
