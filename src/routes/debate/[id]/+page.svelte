@@ -5,6 +5,7 @@
 	import type { Claim, VoteDimension } from '$lib/types';
 	import { getDebateTree } from '$lib/api';
 	import { upsertVote } from '$lib/api/votes';
+	import { auth } from '$lib/stores/auth';
 
 	let debateId = $page.params.id || '1';
 	let claims: Claim[] = [];
@@ -25,23 +26,24 @@
 	});
 
 	const handleVote = async (claimId: string, dimension: VoteDimension, value: number) => {
-		// TODO: Per ora i voti richiedono autenticazione
-		// Mostra messaggio all'utente invece di aggiornamento ottimistico
-		alert('Per votare devi effettuare il login. Funzionalità in arrivo!');
-		return;
+		// Verifica autenticazione
+		if (!$auth.user) {
+			alert('Per votare devi effettuare il login.');
+			return;
+		}
 
-		// Codice per quando avremo l'autenticazione:
 		// Aggiornamento ottimistico locale
-		// claims = updateVoteRecursive(claims, claimId, dimension, value);
+		claims = updateVoteRecursive(claims, claimId, dimension, value);
 		
 		// Salva sul backend
-		// try {
-		// 	await upsertVote(claimId, dimension, value);
-		// } catch (err) {
-		// 	console.error('Error saving vote:', err);
-		// 	claims = updateVoteRecursive(claims, claimId, dimension, -value);
-		// 	alert('Errore nel salvataggio del voto. Riprova.');
-		// }
+		try {
+			await upsertVote(claimId, dimension, value);
+		} catch (err) {
+			console.error('Error saving vote:', err);
+			// Rollback ottimistico in caso di errore
+			claims = updateVoteRecursive(claims, claimId, dimension, -value);
+			alert('Errore nel salvataggio del voto. Riprova.');
+		}
 	};
 
 	function updateVoteRecursive(claimsList: Claim[], targetId: string, dimension: VoteDimension, value: number): Claim[] {
