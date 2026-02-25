@@ -1,3 +1,37 @@
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import { auth } from '$lib/stores/auth';
+	import { getDebates } from '$lib/api/debates';
+	import DebateForm from '$lib/components/DebateForm.svelte';
+	import RichTextDisplay from '$lib/components/RichTextDisplay.svelte';
+	import type { Debate } from '$lib/types';
+
+	let debates: Debate[] = [];
+	let loading = true;
+	let showDebateForm = false;
+
+	async function loadDebates() {
+		try {
+			loading = true;
+			debates = await getDebates();
+		} catch (err) {
+			console.error('Error loading debates:', err);
+		} finally {
+			loading = false;
+		}
+	}
+
+	onMount(loadDebates);
+
+	async function handleDebateCreated() {
+		showDebateForm = false;
+		await loadDebates();
+	}
+
+	// Only Pro Users can create debates
+	$: canCreateDebate = ($auth.user?.role ?? '').trim().toLowerCase() === 'pro user';
+</script>
+
 <div class="home-container">
 	<header class="hero">
 		<h1 class="hero-title">Ergo.voto</h1>
@@ -8,16 +42,45 @@
 	</header>
 
 	<section class="debates-section">
-		<h2 class="section-title">Dibattiti Attivi</h2>
-		<div class="debate-card">
-			<h3 class="debate-card-title">Cambiamento Climatico</h3>
-			<p class="debate-card-description">
-				Discussione strutturata sulle sfide climatiche e le possibili soluzioni.
-			</p>
-			<a href="/debate/1" class="debate-link">
-				Partecipa al dibattito →
-			</a>
+		<div class="section-header">
+			<h2 class="section-title">Dibattiti Attivi</h2>
+			{#if canCreateDebate && !showDebateForm}
+				<button class="btn-create-debate" on:click={() => showDebateForm = true}>
+					+ Crea Dibattito
+				</button>
+			{/if}
 		</div>
+
+		{#if showDebateForm}
+			<DebateForm 
+				onSuccess={handleDebateCreated}
+				onCancel={() => showDebateForm = false}
+			/>
+		{/if}
+
+		{#if loading}
+			<p class="text-gray-500">Caricamento...</p>
+		{:else if debates.length === 0}
+			<p class="text-gray-500">Nessun dibattito disponibile al momento.</p>
+		{:else}
+			<div class="debates-grid">
+				{#each debates as debate (debate.id)}
+					<div class="debate-card">
+						<h3 class="debate-card-title">{debate.title}</h3>
+						<div class="debate-card-description">
+							{#if debate.description}
+								<RichTextDisplay content={debate.description} />
+							{:else}
+								<p>{debate.question}</p>
+							{/if}
+						</div>
+						<a href="/debate/{debate.id}" class="debate-link">
+							Partecipa al dibattito →
+						</a>
+					</div>
+				{/each}
+			</div>
+		{/if}
 	</section>
 
 	<section class="features-section">
@@ -85,11 +148,41 @@
 		margin-bottom: 3rem;
 	}
 
+	.section-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 1.5rem;
+	}
+
 	.section-title {
 		font-size: 1.875rem;
 		font-weight: 700;
 		color: #111827;
-		margin-bottom: 1.5rem;
+		margin: 0;
+	}
+
+	.btn-create-debate {
+		background: #3b82f6;
+		color: white;
+		padding: 0.75rem 1.5rem;
+		border: none;
+		border-radius: 8px;
+		font-weight: 600;
+		cursor: pointer;
+		transition: background 0.2s;
+		box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+	}
+
+	.btn-create-debate:hover {
+		background: #2563eb;
+		box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+	}
+
+	.debates-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+		gap: 1.5rem;
 	}
 
 	.debate-card {

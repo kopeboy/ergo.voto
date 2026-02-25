@@ -188,7 +188,6 @@ export interface components {
     ItemsClaims: {
       id?: number;
       status?: string;
-      sort?: number | null;
       /** Format: uuid */
       user_updated?: string | null;
       /** Format: timestamp */
@@ -198,11 +197,12 @@ export interface components {
       parent_id?: number | components["schemas"]["ItemsClaims"] | null;
       reason?: string | null;
       debate_id?: number | components["schemas"]["ItemsDebates"] | null;
+      is_ergo?: boolean | null;
+      citation_ids?: string | null;
     };
     ItemsDebates: {
       id?: number;
       status?: string;
-      sort?: number | null;
       /** Format: uuid */
       user_updated?: string | null;
       /** Format: timestamp */

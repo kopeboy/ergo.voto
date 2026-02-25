@@ -62,14 +62,14 @@ export async function getClaimTree(claimId: string | number, debateId: string | 
 /**
  * Carica i figli di un claim
  */
-async function getClaimChildren(parentId: number, debateId: number): Promise<Claim[]> {
+export async function getClaimChildren(parentId: string | number, debateId: number): Promise<Claim[]> {
 	try {
 		const children = await directus.request(
 			readItems('claims', {
 				filter: {
-					parent_id: { _eq: parentId },
 					debate_id: { _eq: debateId },
-					status: { _eq: 'published' }
+					parent_id: { _eq: Number(parentId) }
+					// Mostra tutte le claims (published e draft)
 				},
 				sort: ['date_updated']
 			})
@@ -102,8 +102,8 @@ export async function getRootClaims(debateId: string | number): Promise<Claim[]>
 			readItems('claims', {
 				filter: {
 					debate_id: { _eq: Number(debateId) },
-					parent_id: { _null: true },
-					status: { _eq: 'published' }
+					parent_id: { _null: true }
+					// Mostra tutte le claims (published e draft) - il frontend gestirà la visualizzazione
 				},
 				sort: ['date_updated']
 			})
@@ -133,8 +133,10 @@ export async function getRootClaims(debateId: string | number): Promise<Claim[]>
 export async function createClaim(data: {
 	debate_id: number;
 	content: string;
-	type: 'pro' | 'contro' | 'neutro';
+	type: 'pro' | 'contro' | 'fatto' | 'neutro';
 	parent_id?: number | null;
+	citations?: string[];
+	is_ergo?: boolean;
 }): Promise<Claim> {
 	try {
 		const newClaim = await directus.request(
@@ -143,8 +145,10 @@ export async function createClaim(data: {
 				content: data.content,
 				type: data.type,
 				parent_id: data.parent_id || null,
-				status: 'draft' // I nuovi claims partono come draft
-			})
+				status: 'draft', // I nuovi claims partono come draft
+				citations: data.citations || null,
+				is_ergo: data.is_ergo || false
+			} as any)
 		);
 
 		return mapDirectusClaimToFrontend(newClaim as DirectusClaim);
@@ -162,7 +166,7 @@ function mapDirectusClaimToFrontend(claim: DirectusClaim): Claim {
 		id: String(claim.id || ''),
 		debate_id: String(claim.debate_id || ''),
 		content: claim.content || '',
-		type: (claim.type as 'pro' | 'contro' | 'neutro') || 'neutro',
+		type: (claim.type as 'pro' | 'contro' | 'fatto' | 'neutro') || 'fatto',
 		parent_id: claim.parent_id ? String(claim.parent_id) : null,
 		votes: {
 			accuracy: 0, // Verrà popolato separatamente
@@ -171,6 +175,8 @@ function mapDirectusClaimToFrontend(claim: DirectusClaim): Claim {
 		children: [],
 		user_updated: claim.user_updated || undefined,
 		date_updated: claim.date_updated || undefined,
-		status: (claim.status as 'draft' | 'published' | 'flagged') || 'draft'
+		status: (claim.status as 'draft' | 'published' | 'flagged') || 'draft',
+		citations: (claim as any).citations || undefined,
+		is_ergo: (claim as any).is_ergo || undefined
 	};
 }

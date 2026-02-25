@@ -1,4 +1,4 @@
-export type ClaimType = 'pro' | 'contro' | 'neutro';
+export type ClaimType = 'pro' | 'contro' | 'fatto' | 'neutro';
 
 export type VoteDimension = 'accuracy' | 'relevance';
 
@@ -18,6 +18,8 @@ export interface Claim {
 	user_updated?: string;
 	date_updated?: string;
 	status?: 'draft' | 'published' | 'flagged';
+	citations?: string[]; // IDs delle claims/fatti citati per sillogismi
+	is_ergo?: boolean; // True se questa claim è una deduzione logica
 }
 
 export interface Debate {

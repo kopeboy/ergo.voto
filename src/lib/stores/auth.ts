@@ -72,8 +72,11 @@ function createAuthStore() {
 			update(state => ({ ...state, loading: true, error: null }));
 			
 			try {
-				// Verifica se c'è un token salvato (Directus SDK lo gestisce automaticamente)
-				const user = await directus.request(readMe());
+				// Verifica se c'è un token salvato
+				const user = await directus.request(readMe({
+					fields: ['id', 'email', 'first_name', 'last_name', 'role', 'role.id', 'role.name'] as any
+				}));
+				const roleName = typeof user.role === 'object' ? (user.role as any)?.name : undefined;
 				
 				set({
 					user: {
@@ -81,7 +84,7 @@ function createAuthStore() {
 						email: user.email || '',
 						first_name: user.first_name || undefined,
 						last_name: user.last_name || undefined,
-						role: user.role as string || undefined
+						role: roleName
 					},
 					loading: false,
 					error: null
@@ -106,7 +109,10 @@ function createAuthStore() {
 				await directus.login({ email, password });
 
 				// Carica i dati dell'utente
-				const user = await directus.request(readMe());
+				const user = await directus.request(readMe({
+					fields: ['id', 'email', 'first_name', 'last_name', 'role', 'role.id', 'role.name'] as any
+				}));
+				const roleName = typeof user.role === 'object' ? (user.role as any)?.name : undefined;
 
 				set({
 					user: {
@@ -114,7 +120,7 @@ function createAuthStore() {
 						email: user.email || '',
 						first_name: user.first_name || undefined,
 						last_name: user.last_name || undefined,
-						role: user.role as string || undefined
+						role: roleName
 					},
 					loading: false,
 					error: null

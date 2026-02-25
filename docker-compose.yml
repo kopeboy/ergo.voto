@@ -16,6 +16,8 @@ services:
     volumes:
       - ./data/uploads:/directus/uploads
       - ./data/extensions:/directus/extensions
+    depends_on:
+      - database
     environment:
       KEY: "una-chiave-segreta-molto-lunga"
       SECRET: "un-segreto-molto-lungo"

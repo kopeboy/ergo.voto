@@ -1,15 +1,20 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { auth } from '$lib/stores/auth';
 	import { getDebates } from '$lib/api/debates';
+	import DebateForm from '$lib/components/DebateForm.svelte';
+	import RichTextDisplay from '$lib/components/RichTextDisplay.svelte';
 	import type { Debate } from '$lib/types';
 
 	let debates: Debate[] = [];
 	let loading = true;
 	let error: string | null = null;
+	let showDebateForm = false;
 
-	onMount(async () => {
+	async function loadDebates() {
 		try {
 			loading = true;
+			error = null;
 			debates = await getDebates();
 		} catch (err) {
 			console.error('Error loading debates:', err);
@@ -17,7 +22,17 @@
 		} finally {
 			loading = false;
 		}
-	});
+	}
+
+	onMount(loadDebates);
+
+	async function handleDebateCreated() {
+		showDebateForm = false;
+		await loadDebates();
+	}
+
+	// Only Pro Users can create debates
+	$: canCreateDebate = ($auth.user?.role ?? '').trim().toLowerCase() === 'pro user';
 </script>
 
 <svelte:head>
@@ -26,11 +41,27 @@
 
 <div class="debates-container">
 	<header class="debates-header">
-		<h1 class="debates-title">Dibattiti</h1>
-		<p class="debates-description">
-			Esplora i dibattiti attivi e partecipa alla discussione strutturata.
-		</p>
+		<div class="header-content">
+			<div>
+				<h1 class="debates-title">Dibattiti</h1>
+				<p class="debates-description">
+					Esplora i dibattiti attivi e partecipa alla discussione strutturata.
+				</p>
+			</div>
+			{#if canCreateDebate && !showDebateForm}
+				<button class="btn-create-debate" on:click={() => showDebateForm = true}>
+					+ Crea Dibattito
+				</button>
+			{/if}
+		</div>
 	</header>
+
+	{#if showDebateForm}
+		<DebateForm 
+			onSuccess={handleDebateCreated}
+			onCancel={() => showDebateForm = false}
+		/>
+	{/if}
 
 	{#if loading}
 		<div class="loading">
@@ -52,7 +83,9 @@
 					<h2 class="debate-title">{debate.title}</h2>
 					<p class="debate-question">{debate.question}</p>
 					{#if debate.description}
-						<p class="debate-description">{debate.description}</p>
+						<div class="debate-description">
+							<RichTextDisplay content={debate.description} />
+						</div>
 					{/if}
 					<div class="debate-footer">
 						<span class="debate-status">{debate.status}</span>
@@ -76,6 +109,13 @@
 		border-bottom: 2px solid #e5e7eb;
 	}
 
+	.header-content {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 2rem;
+	}
+
 	.debates-title {
 		font-size: 2rem;
 		font-weight: 700;
@@ -87,6 +127,36 @@
 		font-size: 1.125rem;
 		color: #6b7280;
 		line-height: 1.6;
+	}
+
+	.btn-create-debate {
+		background: #3b82f6;
+		color: white;
+		padding: 0.75rem 1.5rem;
+		border: none;
+		border-radius: 8px;
+		font-weight: 600;
+		cursor: pointer;
+		transition: background 0.2s;
+		box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+		white-space: nowrap;
+		flex-shrink: 0;
+	}
+
+	.btn-create-debate:hover {
+		background: #2563eb;
+		box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+	}
+
+	@media (max-width: 768px) {
+		.header-content {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		.btn-create-debate {
+			width: 100%;
+		}
 	}
 
 	.loading, .error, .empty {

@@ -76,8 +76,7 @@ Sviluppare un prototipo funzionale di piattaforma per dibattiti gerarchici in po
    - ✅ Componente Header con login/logout
    - ✅ Modal di login con gestione errori
    - ✅ Verifica autenticazione prima di votare
-   - ✅ Votazione con aggiornamento ottimistico
-   - ✅ Rollback automatico su errore
+   - ✅ Token refresh automatico ogni 14.5 minuti
    - ✅ Pagina lista dibattiti (/debates)
 
 ### ✅ Completato (continua)
@@ -87,7 +86,6 @@ Sviluppare un prototipo funzionale di piattaforma per dibattiti gerarchici in po
    - ✅ Integrare vote caching ottimizzato (SvelteMap reattivo)
    - ✅ Aggiornamento ottimistico UI con rollback su errore
    - ✅ Toggle voti (cliccare stesso voto lo rimuove)
-   - ✅ Token refresh automatico ogni 14.5 minuti
 
 ### 🔄 In Corso
 

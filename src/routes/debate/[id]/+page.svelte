@@ -2,14 +2,16 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { getDebateTree } from '$lib/api';
+	import { getDebate } from '$lib/api/debates';
 	import { voteWithCache, loadUserVotesForClaims } from '$lib/stores/votes';
 	import { userVotesStore } from '$lib/stores/votes';
-	import ClaimNode from '$lib/components/ClaimNode.svelte';
-	import type { Claim, VoteDimension } from '$lib/types';
+	import DebateLayout from '$lib/components/DebateLayout.svelte';
+	import type { Claim, VoteDimension, Debate } from '$lib/types';
 	import { auth } from '$lib/stores/auth';
 
 	let debateId = $page.params.id || '1';
 	let claims: Claim[] = [];
+	let debate: Debate | null = null;
 	let loading = true;
 	let error: string | null = null;
 
@@ -26,10 +28,17 @@
 	}
 
 	// Carica i dati dal backend
-	onMount(async () => {
+	async function loadDebate() {
 		try {
 			loading = true;
-			const tree = await getDebateTree(debateId);
+			
+			// Carica i dati del dibattito e l'albero delle claims in parallelo
+			const [debateData, tree] = await Promise.all([
+				getDebate(debateId),
+				getDebateTree(debateId)
+			]);
+			
+			debate = debateData;
 			claims = tree;
 			
 			// Se l'utente è loggato, carica i suoi voti per le claim visibili
@@ -45,7 +54,26 @@
 		} finally {
 			loading = false;
 		}
-	});
+	}
+
+	onMount(loadDebate);
+
+	// Track previous auth state to detect login/logout
+	let previousAuthState = $auth.user;
+	$: {
+		// Reload only when auth state actually changes (login or logout)
+		if (previousAuthState !== $auth.user && !$auth.loading) {
+			previousAuthState = $auth.user;
+			if (typeof window !== 'undefined') {
+				loadDebate();
+			}
+		}
+	}
+
+	// Callback dopo creazione claim
+	async function handleClaimCreated() {
+		await loadDebate();
+	}
 
 	const handleVote = async (claimId: string, dimension: VoteDimension, value: number) => {
 		// Verifica autenticazione
@@ -102,41 +130,25 @@
 </script>
 
 <svelte:head>
-	<title>Dibattito #{debateId} - Ergo.voto</title>
+	<title>{debate?.title || `Dibattito #${debateId}`} - Ergo.voto</title>
 </svelte:head>
 
-<div class="debate-container">
-	<header class="debate-header">
-		<h1 class="debate-title">Dibattito sul Cambiamento Climatico</h1>
-		<p class="debate-description">
-			Esplora le argomentazioni strutturate e vota sulle dimensioni di Accuratezza e Rilevanza.
-		</p>
-	</header>
-
-	{#if loading}
-		<div class="loading">
-			<p>Caricamento dibattito...</p>
-		</div>
-	{:else if error}
-		<div class="error">
-			<p>{error}</p>
-		</div>
-	{:else if claims.length === 0}
-		<div class="empty">
-			<p>Nessun claim pubblicato in questo dibattito.</p>
-			<p class="text-sm text-gray-600">Sii il primo a contribuire!</p>
-		</div>
-	{:else}
-		<div class="claims-tree">
-			{#each claims as claim (claim.id)}
-				<ClaimNode 
-					{claim} 
-					depth={0} 
-					onVote={handleVote}
-				/>
-			{/each}
-		</div>
-	{/if}
+{#if loading}
+	<div class="loading">
+		<p>Caricamento dibattito...</p>
+	</div>
+{:else if error}
+	<div class="error">
+		<p>{error}</p>
+	</div>
+{:else}
+	<DebateLayout 
+		{debateId}
+		{debate}
+		{claims}
+		onVote={handleVote}
+		onClaimCreated={handleClaimCreated}
+	/>
 
 	<div class="info-panel">
 		<h3 class="info-title">Come funziona il voto multi-dimensionale?</h3>
@@ -148,39 +160,10 @@
 			💡 I voti sono ottimistici: vedrai il cambiamento immediatamente nel browser.
 		</p>
 	</div>
-</div>
+{/if}
 
 <style>
-	.debate-container {
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: 2rem 1rem;
-	}
-
-	.debate-header {
-		margin-bottom: 2rem;
-		padding-bottom: 1.5rem;
-		border-bottom: 2px solid #e5e7eb;
-	}
-
-	.debate-title {
-		font-size: 2rem;
-		font-weight: 700;
-		color: #111827;
-		margin-bottom: 0.5rem;
-	}
-
-	.debate-description {
-		font-size: 1.125rem;
-		color: #6b7280;
-		line-height: 1.6;
-	}
-
-	.claims-tree {
-		margin-bottom: 2rem;
-	}
-
-	.loading, .error, .empty {
+	.loading, .error {
 		text-align: center;
 		padding: 3rem 1rem;
 		color: #6b7280;
@@ -193,18 +176,15 @@
 		border-radius: 0.5rem;
 	}
 
-	.empty {
-		background: #f9fafb;
-		border: 1px solid #e5e7eb;
-		border-radius: 0.5rem;
-	}
-
 	.info-panel {
 		background: #f9fafb;
 		border: 1px solid #e5e7eb;
 		border-radius: 0.5rem;
 		padding: 1.5rem;
 		margin-top: 2rem;
+		max-width: 1400px;
+		margin-left: auto;
+		margin-right: auto;
 	}
 
 	.info-title {
@@ -233,19 +213,5 @@
 		margin-top: 1rem;
 		color: #1e40af;
 		border-radius: 0.25rem;
-	}
-
-	@media (max-width: 768px) {
-		.debate-container {
-			padding: 1rem 0.5rem;
-		}
-
-		.debate-title {
-			font-size: 1.5rem;
-		}
-
-		.debate-description {
-			font-size: 1rem;
-		}
 	}
 </style>
