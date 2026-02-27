@@ -2,6 +2,9 @@
 	import { auth } from '$lib/stores/auth';
 	import { onMount } from 'svelte';
 	import AuthModal from './AuthModal.svelte';
+	import type { Debate } from '$lib/types';
+
+	export let debate: Debate | null = null;
 
 	let showAuthModal = false;
 	
@@ -26,6 +29,9 @@
 		<nav class="header-nav">
 			<a href="/" class="nav-link">Home</a>
 			<a href="/debates" class="nav-link">Dibattiti</a>
+			{#if debate?.topic}
+				<span class="debate-topic">{debate.topic}</span>
+			{/if}
 		</nav>
 
 		<div class="header-right">
@@ -56,6 +62,10 @@
 		position: sticky;
 		top: 0;
 		z-index: 100;
+	}
+	
+	:global(body.debate-page) .site-header {
+		position: relative;
 	}
 
 	.header-content {
@@ -92,8 +102,18 @@
 
 	.header-nav {
 		display: flex;
+		align-items: center;
 		gap: 1.5rem;
 		flex: 1;
+	}
+
+	.debate-topic {
+		color: #111827;
+		font-weight: 600;
+		font-size: 0.95rem;
+		margin-left: 1rem;
+		padding-left: 1rem;
+		border-left: 2px solid #e5e7eb;
 	}
 
 	.nav-link {

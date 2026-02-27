@@ -1,0 +1,50 @@
+[
+  {
+    "debate": 1,
+    "parent": null,
+    "argument": "L'intelligenza artificiale ha dimostrato di raggiungere tassi di accuratezza diagnostica superiori al 95% in molte specialità mediche, superando significativamente le performance dei medici umani in condizioni controllate. Studi recenti pubblicati su Nature Medicine mostrano che i sistemi di AI possono identificare tumori in fase precoce con una precisione del 97%, riducendo drasticamente i falsi negativi che potrebbero costare vite umane.",
+    "is_objection": false,
+    "vote_score": 15,
+    "status": "published"
+  },
+  {
+    "debate": 1,
+    "parent": null,
+    "argument": "L'implementazione dell'AI ridurrebbe significativamente i costi sanitari a lungo termine. Secondo uno studio del McKinsey Global Institute, l'automazione diagnostica potrebbe far risparmiare al sistema sanitario globale fino a 150 miliardi di dollari all'anno entro il 2030, liberando risorse per trattamenti e prevenzione. Inoltre, l'AI può analizzare migliaia di casi in pochi secondi, riducendo i tempi di attesa per i pazienti.",
+    "is_objection": false,
+    "vote_score": 12,
+    "status": "published"
+  },
+  {
+    "debate": 1,
+    "parent": null,
+    "argument": "La standardizzazione delle diagnosi attraverso l'AI eliminerebbe le disparità regionali nell'accesso alle cure di qualità. Attualmente, la qualità della diagnosi dipende fortemente dall'esperienza del medico locale, creando ingiustizie tra aree urbane e rurali. Un sistema di AI centralizzato garantirebbe lo stesso livello di eccellenza diagnostica ovunque, democratizzando l'accesso alla medicina di precisione.",
+    "is_objection": false,
+    "vote_score": 8,
+    "status": "published"
+  },
+  {
+    "debate": 1,
+    "parent": null,
+    "argument": "L'intelligenza artificiale manca della capacità di comprendere il contesto umano completo che è fondamentale per una diagnosi accurata. I medici considerano non solo i sintomi fisici, ma anche fattori psicologici, sociali e ambientali che un algoritmo non può cogliere. La medicina non è solo scienza dei dati, ma anche arte dell'ascolto e dell'empatia, elementi che nessuna AI può replicare.",
+    "is_objection": true,
+    "vote_score": 18,
+    "status": "published"
+  },
+  {
+    "debate": 1,
+    "parent": null,
+    "argument": "I sistemi di AI sono vulnerabili a bias sistemici derivanti dai dati di addestramento. Se i dataset utilizzati per addestrare l'AI contengono prevalentemente dati di popolazioni specifiche (ad esempio, caucasici maschi), il sistema potrebbe essere meno accurato per donne, minoranze etniche o gruppi sottorappresentati. Questo potrebbe aggravare le disuguaglianze sanitarie esistenti invece di risolverle.",
+    "is_objection": true,
+    "vote_score": 14,
+    "status": "published"
+  },
+  {
+    "debate": 1,
+    "parent": null,
+    "argument": "La responsabilità legale in caso di errore diagnostico diventa estremamente problematica con l'AI obbligatoria. Chi è responsabile se l'algoritmo sbaglia: il programmatore, l'ospedale, il medico che ha seguito le indicazioni dell'AI? Questa zona grigia legale potrebbe paralizzare il sistema giudiziario e lasciare i pazienti danneggiati senza possibilità di ricorso adeguato.",
+    "is_objection": true,
+    "vote_score": 10,
+    "status": "published"
+  }
+]

@@ -1,268 +1,238 @@
 <script lang="ts">
-	import type { Claim, Debate } from '$lib/types';
-	import ClaimNode from './ClaimNode.svelte';
-	import ClaimForm from './ClaimForm.svelte';
-	import RichTextDisplay from './RichTextDisplay.svelte';
+	import type { Argument, Debate } from '$lib/types';
+	import ArgumentNode from './ArgumentNode.svelte';
+	import ArgumentForm from './ArgumentForm.svelte';
 	import { auth } from '$lib/stores/auth';
 
-	export let debateId: string;
+	export let debateId: number;
 	export let debate: Debate | null;
-	export let claims: Claim[];
-	export let onVote: (claimId: string, dimension: any, value: number) => void;
-	export let onClaimCreated: () => void;
+	export let argumentsList: Argument[];
 
-	let showFattoForm = false;
 	let showProForm = false;
 	let showControForm = false;
-	let expandedClaimId: string | null = null;
+	let expandedArgument: Argument | null = null;
+	let isColumnExpanded = false;
 
-	// Separa le claims per tipo
-	$: fatti = claims.filter(c => (c.type === 'fatto' || c.type === 'neutro') && !c.parent_id);
-	$: proClaims = claims.filter(c => c.type === 'pro' && !c.parent_id);
-	$: controClaims = claims.filter(c => c.type === 'contro' && !c.parent_id);
+	$: debateType = debate?.type || 'claim';
+	$: proLabel = debateType === 'question' ? 'Sì' : 'Pro';
+	$: controLabel = debateType === 'question' ? 'No' : 'Contro';
+	$: proArguments = argumentsList.filter(a => !a.is_objection && !a.parent);
+	$: controArguments = argumentsList.filter(a => a.is_objection && !a.parent);
 
-	function toggleExpand(claimId: string) {
-		expandedClaimId = expandedClaimId === claimId ? null : claimId;
+	function handleExpandArgument(argument: Argument) {
+		expandedArgument = argument;
 	}
 
-	function handleFormSuccess() {
-		showFattoForm = false;
+	function handleCollapseArgument() {
+		expandedArgument = null;
+	}
+
+	function handleFormClose() {
 		showProForm = false;
 		showControForm = false;
-		onClaimCreated();
+	}
+
+	async function handleArgumentCreated(newArgument: any) {
+		handleFormClose();
+		
+		// Add new argument optimistically to the list
+		argumentsList = [...argumentsList, newArgument];
+		
+		// Wait for DOM update, then scroll to and highlight the new argument
+		setTimeout(() => {
+			const element = document.getElementById(`argument-${newArgument.id}`);
+			if (element) {
+				element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				element.classList.add('highlight-new');
+				setTimeout(() => element.classList.remove('highlight-new'), 1000);
+			}
+		}, 100);
 	}
 </script>
 
-<div class="debate-layout">
-	<!-- Domanda del dibattito -->
-	<div class="debate-question-card">
-		{#if debate}
-			<h1 class="text-3xl font-bold text-gray-900 mb-3">{debate.title}</h1>
-			<h2 class="text-xl font-semibold text-gray-700 mb-3">{debate.question}</h2>
-			{#if debate.description}
-				<div class="debate-description">
-					<RichTextDisplay content={debate.description} />
+<div class="debate-container max-w-7xl mx-auto px-4 py-8">
+	<!-- Debate header -->
+	{#if debate}
+		<div class="debate-header mb-8">
+			<h1 class="debate-topic text-3xl font-bold mb-3 text-center">{debate.topic}</h1>
+			{#if debate.intro}
+				<p class="debate-intro text-base text-gray-700 max-w-3xl mx-auto mb-4">
+					{debate.intro}
+				</p>
+			{/if}
+		</div>
+		
+		<!-- Sticky container for claim and controls -->
+		<div class="sticky-controls sticky top-0 z-20 bg-white border border-gray-200 rounded-lg shadow-sm pb-3 mb-2">
+			<!-- Debate claim/question with Si/No buttons -->
+			<div class="debate-claim bg-white p-4 mb-2 flex items-center justify-between gap-6">
+				{#if $auth.user}
+					<button
+						class="claim-button px-6 py-3 rounded-lg font-bold text-white bg-green-600 hover:bg-green-700 transition-colors text-lg"
+						onclick={() => showProForm = true}
+					>
+						{proLabel}
+					</button>
+				{/if}
+				<div class="flex-1 text-center">
+					{#if debateType === 'question' && debate.question}
+						<h2 class="claim-text text-xl font-bold text-gray-900">{debate.question}</h2>
+					{:else if debateType === 'claim' && debate.claim}
+						<h2 class="claim-text text-xl font-bold text-gray-900">{debate.claim}</h2>
+					{/if}
+				</div>
+				{#if $auth.user}
+					<button
+						class="claim-button px-6 py-3 rounded-lg font-bold text-white bg-red-600 hover:bg-red-700 transition-colors text-lg"
+						onclick={() => showControForm = true}
+					>
+						{controLabel}
+					</button>
+				{/if}
+			</div>
+
+			<!-- Search and select controls -->
+			{#if $auth.user}
+				<div class="search-controls flex gap-2 items-center justify-center">
+					<input
+						type="text"
+						placeholder="Cerca..."
+						class="px-2 py-1 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent w-32"
+					/>
+					<button class="px-2 py-1 text-xs rounded-md font-medium cursor-pointer border border-gray-300 hover:bg-gray-50 transition-colors">
+						Seleziona
+					</button>
 				</div>
 			{/if}
-		{:else}
-			<h2 class="text-2xl font-bold text-gray-900 mb-2">Caricamento...</h2>
-		{/if}
-	</div>
-
-	<!-- Sezione FATTI (full-width, grigio) -->
-	<div class="fatti-section">
-		<div class="section-header bg-gray-100 border-l-4 border-gray-500">
-			<h3 class="text-lg font-semibold text-gray-800">📊 FATTI</h3>
-			<p class="text-sm text-gray-600">Informazioni verificabili</p>
 		</div>
 
-		{#if $auth.user && !showFattoForm}
-			<button 
-				class="add-claim-btn bg-gray-600 hover:bg-gray-700"
-				on:click={() => showFattoForm = true}
-			>
-				+ Aggiungi Fatto
-			</button>
-		{/if}
 
-		{#if showFattoForm}
-			<ClaimForm 
-				{debateId}
-				parentId={null}
-				claimType="fatto"
-				onSuccess={handleFormSuccess}
-				onCancel={() => showFattoForm = false}
-			/>
-		{/if}
-
-		<div class="claims-list">
-			{#each fatti as fatto (fatto.id)}
-				<ClaimNode 
-					claim={fatto}
-					depth={0}
-					{onVote}
-					{debateId}
-					{onClaimCreated}
-				/>
-			{/each}
-			{#if fatti.length === 0 && !showFattoForm}
-				<p class="text-sm text-gray-500 italic">Nessun fatto ancora inserito</p>
-			{/if}
-		</div>
-	</div>
-
-	<!-- Layout a 2 colonne: PRO e CONTRO -->
-	<div class="two-column-layout">
-		<!-- Colonna PRO (sinistra, verde) -->
-		<div class="column pro-column">
-			<div class="section-header bg-green-100 border-l-4 border-green-500">
-				<h3 class="text-lg font-semibold text-green-800">✓ PRO</h3>
-				<p class="text-sm text-green-700">Argomentazioni a favore</p>
-			</div>
-
-			{#if $auth.user && !showProForm}
-				<button 
-					class="add-claim-btn bg-green-600 hover:bg-green-700"
-					on:click={() => showProForm = true}
-				>
-					+ Aggiungi Pro
-				</button>
-			{/if}
-
-			{#if showProForm}
-				<ClaimForm 
-					{debateId}
-					parentId={null}
-					claimType="pro"
-					onSuccess={handleFormSuccess}
-					onCancel={() => showProForm = false}
-				/>
-			{/if}
-
-			<div class="claims-list">
-				{#each proClaims as claim (claim.id)}
-					<ClaimNode 
-						{claim}
-						depth={0}
-						{onVote}
-						{debateId}
-						{onClaimCreated}
-					/>
+	<div class="arguments-grid grid grid-cols-2 gap-4 relative" onclick={(e) => {
+		if (expandedArgument && e.target === e.currentTarget) {
+			handleCollapseArgument();
+		}
+	}}>
+		<!-- Pro Column -->
+		<div 
+			class="argument-column pro-column border rounded-lg transition-all duration-500 relative p-6"
+			class:column-expanded={expandedArgument && !expandedArgument.is_objection}
+			class:column-collapsed={expandedArgument && expandedArgument.is_objection}
+			onclick={(e) => {
+				if (expandedArgument && expandedArgument.is_objection && e.target === e.currentTarget) {
+					e.stopPropagation();
+					handleCollapseArgument();
+				}
+			}}
+		>
+			<div class="space-y-3">
+				{#each proArguments as argument (argument.id)}
+					<ArgumentNode {argument} {debateId} depth={0} isExpanded={expandedArgument?.id === argument.id} inColumnExpanded={!!(expandedArgument && !expandedArgument.is_objection)} onExpand={handleExpandArgument} />
 				{/each}
-				{#if proClaims.length === 0 && !showProForm}
-					<p class="text-sm text-gray-500 italic">Nessuna argomentazione pro ancora inserita</p>
+				{#if proArguments.length === 0}
+					<p class="text-sm text-gray-500 italic">Nessun argomento ancora inserito</p>
 				{/if}
 			</div>
 		</div>
 
-		<!-- Colonna CONTRO (destra, rossa) -->
-		<div class="column contro-column">
-			<div class="section-header bg-red-100 border-l-4 border-red-500">
-				<h3 class="text-lg font-semibold text-red-800">✗ CONTRO</h3>
-				<p class="text-sm text-red-700">Argomentazioni contrarie</p>
-			</div>
-
-			{#if $auth.user && !showControForm}
-				<button 
-					class="add-claim-btn bg-red-600 hover:bg-red-700"
-					on:click={() => showControForm = true}
-				>
-					+ Aggiungi Contro
-				</button>
-			{/if}
-
-			{#if showControForm}
-				<ClaimForm 
-					{debateId}
-					parentId={null}
-					claimType="contro"
-					onSuccess={handleFormSuccess}
-					onCancel={() => showControForm = false}
-				/>
-			{/if}
-
-			<div class="claims-list">
-				{#each controClaims as claim (claim.id)}
-					<ClaimNode 
-						{claim}
-						depth={0}
-						{onVote}
-						{debateId}
-						{onClaimCreated}
-					/>
+		<!-- Contro Column -->
+		<div 
+			class="argument-column contro-column border rounded-lg transition-all duration-500 relative p-6"
+			class:column-expanded={expandedArgument && expandedArgument.is_objection}
+			class:column-collapsed={expandedArgument && !expandedArgument.is_objection}
+			onclick={(e) => {
+				if (expandedArgument && !expandedArgument.is_objection && e.target === e.currentTarget) {
+					e.stopPropagation();
+					handleCollapseArgument();
+				}
+			}}
+		>
+			<div class="space-y-3">
+				{#each controArguments as argument (argument.id)}
+					<ArgumentNode {argument} {debateId} depth={0} isExpanded={expandedArgument?.id === argument.id} inColumnExpanded={!!(expandedArgument && expandedArgument.is_objection)} onExpand={handleExpandArgument} />
 				{/each}
-				{#if controClaims.length === 0 && !showControForm}
-					<p class="text-sm text-gray-500 italic">Nessuna argomentazione contro ancora inserita</p>
+				{#if controArguments.length === 0}
+					<p class="text-sm text-gray-500 italic">Nessun argomento ancora inserito</p>
 				{/if}
 			</div>
 		</div>
 	</div>
+	{/if}
 </div>
 
 <style>
-	.debate-layout {
-		max-width: 1400px;
-		margin: 0 auto;
-		padding: 2rem 1rem;
+	.arguments-grid {
+		position: relative;
 	}
-
-	.debate-question-card {
-		background: white;
-		border: 2px solid #e5e7eb;
-		border-radius: 12px;
-		padding: 2rem;
-		margin-bottom: 2rem;
-		text-align: center;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+	
+	.argument-column {
+		position: relative;
 	}
-
-	.debate-description {
-		margin-top: 1.5rem;
-		padding-top: 1.5rem;
-		border-top: 1px solid #e5e7eb;
-		text-align: left;
-		max-width: 800px;
-		margin-left: auto;
-		margin-right: auto;
+	
+	.column-expanded {
+		position: absolute;
+		top: 0;
+		width: 80vw;
+		z-index: 30;
+		box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
 	}
-
-	.fatti-section {
-		background: #fafafa;
-		border: 2px solid #d1d5db;
-		border-radius: 12px;
-		padding: 1.5rem;
-		margin-bottom: 2rem;
-	}
-
-	.section-header {
-		padding: 1rem;
-		border-radius: 8px;
-		margin-bottom: 1rem;
-	}
-
-	.two-column-layout {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 2rem;
-	}
-
-	@media (max-width: 768px) {
-		.two-column-layout {
-			grid-template-columns: 1fr;
-		}
-	}
-
-	.column {
-		background: white;
-		border: 2px solid #e5e7eb;
-		border-radius: 12px;
-		padding: 1.5rem;
-		min-height: 400px;
-	}
-
+	
 	.pro-column {
-		border-color: #86efac;
+		grid-column: 1;
 	}
-
+	
 	.contro-column {
-		border-color: #fca5a5;
+		grid-column: 2;
 	}
-
-	.add-claim-btn {
-		width: 100%;
-		padding: 0.75rem;
-		color: white;
-		border: none;
-		border-radius: 8px;
-		font-weight: 600;
+	
+	.pro-column.column-expanded {
+		left: 0;
+		right: auto;
+	}
+	
+	.contro-column.column-expanded {
+		left: auto;
+		right: 0;
+	}
+	
+	/* Column backgrounds and borders */
+	.pro-column {
+		border-color: rgba(34, 197, 94, 0.4) !important;
+		background: #f0fdf4 !important;
+	}
+	
+	.contro-column {
+		border-color: rgba(239, 68, 68, 0.4) !important;
+		background: #fef2f2 !important;
+	}
+	
+	.column-collapsed {
+		z-index: 10;
+	}
+	
+	.column-collapsed {
 		cursor: pointer;
-		transition: all 0.2s;
-		margin-bottom: 1rem;
-	}
-
-	.claims-list {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
+		opacity: 0.3;
+		pointer-events: none;
 	}
 </style>
+
+{#if showProForm}
+	<ArgumentForm
+		{debateId}
+		parentId={null}
+		isObjection={false}
+		onClose={handleFormClose}
+		onSuccess={handleArgumentCreated}
+	/>
+{/if}
+
+{#if showControForm}
+	<ArgumentForm
+		{debateId}
+		parentId={null}
+		isObjection={true}
+		onClose={handleFormClose}
+		onSuccess={handleArgumentCreated}
+	/>
+{/if}
+

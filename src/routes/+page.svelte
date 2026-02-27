@@ -3,7 +3,6 @@
 	import { auth } from '$lib/stores/auth';
 	import { getDebates } from '$lib/api/debates';
 	import DebateForm from '$lib/components/DebateForm.svelte';
-	import RichTextDisplay from '$lib/components/RichTextDisplay.svelte';
 	import type { Debate } from '$lib/types';
 
 	let debates: Debate[] = [];
@@ -37,7 +36,7 @@
 		<h1 class="hero-title">Ergo.voto</h1>
 		<p class="hero-subtitle">Piattaforma per Dibattiti Strutturati</p>
 		<p class="hero-description">
-			Esplora argomentazioni gerarchiche con voto multi-dimensionale su Accuratezza e Rilevanza.
+			Esplora argomentazioni gerarchiche con voto semplice e fonti verificabili.
 		</p>
 	</header>
 
@@ -66,14 +65,24 @@
 			<div class="debates-grid">
 				{#each debates as debate (debate.id)}
 					<div class="debate-card">
-						<h3 class="debate-card-title">{debate.title}</h3>
+						<h3 class="debate-card-title">{debate.topic}</h3>
 						<div class="debate-card-description">
-							{#if debate.description}
-								<RichTextDisplay content={debate.description} />
-							{:else}
-								<p>{debate.question}</p>
+							{#if debate.type === 'question' && debate.question}
+								<p class="font-semibold text-gray-700 mb-2">{debate.question}</p>
+							{:else if debate.type === 'claim' && debate.claim}
+								<p class="font-semibold text-gray-700 mb-2">{debate.claim}</p>
+							{/if}
+							{#if debate.intro}
+								<p class="text-gray-600">{debate.intro}</p>
 							{/if}
 						</div>
+						{#if debate.tags && debate.tags.length > 0}
+							<div class="debate-tags">
+								{#each debate.tags as tag}
+									<span class="debate-tag">{tag}</span>
+								{/each}
+							</div>
+						{/if}
 						<a href="/debate/{debate.id}" class="debate-link">
 							Partecipa al dibattito →
 						</a>
@@ -93,13 +102,13 @@
 			</div>
 			<div class="feature">
 				<div class="feature-icon">📊</div>
-				<h3 class="feature-title">Voto Multi-Dimensionale</h3>
-				<p class="feature-description">Valuta Accuratezza e Rilevanza</p>
+				<h3 class="feature-title">Voto Semplice</h3>
+				<p class="feature-description">Vota +1 o -1 per ogni argomento</p>
 			</div>
 			<div class="feature">
-				<div class="feature-icon">⚡</div>
-				<h3 class="feature-title">Aggiornamenti Ottimistici</h3>
-				<p class="feature-description">Feedback immediato sui tuoi voti</p>
+				<div class="feature-icon">🔗</div>
+				<h3 class="feature-title">Fonti Verificabili</h3>
+				<p class="feature-description">Ogni argomento può avere fonti con citazioni</p>
 			</div>
 		</div>
 	</section>
@@ -163,7 +172,7 @@
 	}
 
 	.btn-create-debate {
-		background: #3b82f6;
+		background: #eab308;
 		color: white;
 		padding: 0.75rem 1.5rem;
 		border: none;
@@ -175,8 +184,8 @@
 	}
 
 	.btn-create-debate:hover {
-		background: #2563eb;
-		box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+		background: #ca8a04;
+		box-shadow: 0 4px 8px rgba(234, 179, 8, 0.3);
 	}
 
 	.debates-grid {
@@ -210,6 +219,22 @@
 		color: #6b7280;
 		margin-bottom: 1.5rem;
 		line-height: 1.6;
+	}
+
+	.debate-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.debate-tag {
+		background: #fef3c7;
+		color: #92400e;
+		padding: 0.25rem 0.75rem;
+		border-radius: 9999px;
+		font-size: 0.875rem;
+		font-weight: 500;
 	}
 
 	.debate-link {

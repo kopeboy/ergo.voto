@@ -75,48 +75,6 @@ export interface paths {
      */
     get: operations["ping"];
   };
-  "/items/votes": {
-    /**
-     * List Items
-     * @description List the votes items.
-     */
-    get: operations["readItemsVotes"];
-  };
-  "/items/votes/{id}": {
-    /**
-     * Retrieve an Item
-     * @description Retrieve a single votes item by unique identifier.
-     */
-    get: operations["readSingleItemsVotes"];
-  };
-  "/items/claims": {
-    /**
-     * List Items
-     * @description List the claims items.
-     */
-    get: operations["readItemsClaims"];
-  };
-  "/items/claims/{id}": {
-    /**
-     * Retrieve an Item
-     * @description Retrieve a single claims item by unique identifier.
-     */
-    get: operations["readSingleItemsClaims"];
-  };
-  "/items/debates": {
-    /**
-     * List Items
-     * @description List the debates items.
-     */
-    get: operations["readItemsDebates"];
-  };
-  "/items/debates/{id}": {
-    /**
-     * Retrieve an Item
-     * @description Retrieve a single debates item by unique identifier.
-     */
-    get: operations["readSingleItemsDebates"];
-  };
 }
 
 export type webhooks = Record<string, never>;
@@ -170,46 +128,6 @@ export interface components {
       total_count?: number;
       /** @description Returns the item count of the collection you're querying, taking the current filter/search parameters into account. */
       filter_count?: number;
-    };
-    ItemsVotes: {
-      id?: number;
-      /** Format: uuid */
-      user_updated?: string | null;
-      /** Format: timestamp */
-      date_updated?: string | null;
-      claim_id?: number | components["schemas"]["ItemsClaims"] | null;
-      accuracy?: number | null;
-      relevance?: number | null;
-      /** Format: uuid */
-      user_created?: string | null;
-      /** Format: timestamp */
-      date_created?: string | null;
-    };
-    ItemsClaims: {
-      id?: number;
-      status?: string;
-      /** Format: uuid */
-      user_updated?: string | null;
-      /** Format: timestamp */
-      date_updated?: string | null;
-      content?: string | null;
-      type?: string | null;
-      parent_id?: number | components["schemas"]["ItemsClaims"] | null;
-      reason?: string | null;
-      debate_id?: number | components["schemas"]["ItemsDebates"] | null;
-      is_ergo?: boolean | null;
-      citation_ids?: string | null;
-    };
-    ItemsDebates: {
-      id?: number;
-      status?: string;
-      /** Format: uuid */
-      user_updated?: string | null;
-      /** Format: timestamp */
-      date_updated?: string | null;
-      title?: string | null;
-      description?: string | null;
-      question?: string | null;
     };
   };
   responses: {
@@ -561,185 +479,61 @@ export interface operations {
       };
     };
   };
-  /**
-   * List Items
-   * @description List the votes items.
-   */
-  readItemsVotes: {
-    parameters: {
-      query?: {
-        fields?: components["parameters"]["Fields"];
-        limit?: components["parameters"]["Limit"];
-        meta?: components["parameters"]["Meta"];
-        offset?: components["parameters"]["Offset"];
-        sort?: components["parameters"]["Sort"];
-        filter?: components["parameters"]["Filter"];
-        search?: components["parameters"]["Search"];
-      };
-    };
-    responses: {
-      /** @description Successful request */
-      200: {
-        content: {
-          "application/json": {
-            data?: components["schemas"]["ItemsVotes"][];
-            meta?: components["schemas"]["x-metadata"];
-          };
-        };
-      };
-      401: components["responses"]["UnauthorizedError"];
-    };
-  };
-  /**
-   * Retrieve an Item
-   * @description Retrieve a single votes item by unique identifier.
-   */
-  readSingleItemsVotes: {
-    parameters: {
-      query?: {
-        fields?: components["parameters"]["Fields"];
-        meta?: components["parameters"]["Meta"];
-        version?: components["parameters"]["Version"];
-      };
-      path: {
-        /** @description Index of the item. */
-        id: number | string;
-      };
-    };
-    responses: {
-      /** @description Successful request */
-      200: {
-        content: {
-          "application/json": {
-            data?: components["schemas"]["ItemsVotes"];
-          };
-        };
-      };
-      401: components["responses"]["UnauthorizedError"];
-      404: components["responses"]["NotFoundError"];
-    };
-  };
-  /**
-   * List Items
-   * @description List the claims items.
-   */
-  readItemsClaims: {
-    parameters: {
-      query?: {
-        fields?: components["parameters"]["Fields"];
-        limit?: components["parameters"]["Limit"];
-        meta?: components["parameters"]["Meta"];
-        offset?: components["parameters"]["Offset"];
-        sort?: components["parameters"]["Sort"];
-        filter?: components["parameters"]["Filter"];
-        search?: components["parameters"]["Search"];
-      };
-    };
-    responses: {
-      /** @description Successful request */
-      200: {
-        content: {
-          "application/json": {
-            data?: components["schemas"]["ItemsClaims"][];
-            meta?: components["schemas"]["x-metadata"];
-          };
-        };
-      };
-      401: components["responses"]["UnauthorizedError"];
-    };
-  };
-  /**
-   * Retrieve an Item
-   * @description Retrieve a single claims item by unique identifier.
-   */
-  readSingleItemsClaims: {
-    parameters: {
-      query?: {
-        fields?: components["parameters"]["Fields"];
-        meta?: components["parameters"]["Meta"];
-        version?: components["parameters"]["Version"];
-      };
-      path: {
-        /** @description Index of the item. */
-        id: number | string;
-      };
-    };
-    responses: {
-      /** @description Successful request */
-      200: {
-        content: {
-          "application/json": {
-            data?: components["schemas"]["ItemsClaims"];
-          };
-        };
-      };
-      401: components["responses"]["UnauthorizedError"];
-      404: components["responses"]["NotFoundError"];
-    };
-  };
-  /**
-   * List Items
-   * @description List the debates items.
-   */
-  readItemsDebates: {
-    parameters: {
-      query?: {
-        fields?: components["parameters"]["Fields"];
-        limit?: components["parameters"]["Limit"];
-        meta?: components["parameters"]["Meta"];
-        offset?: components["parameters"]["Offset"];
-        sort?: components["parameters"]["Sort"];
-        filter?: components["parameters"]["Filter"];
-        search?: components["parameters"]["Search"];
-      };
-    };
-    responses: {
-      /** @description Successful request */
-      200: {
-        content: {
-          "application/json": {
-            data?: components["schemas"]["ItemsDebates"][];
-            meta?: components["schemas"]["x-metadata"];
-          };
-        };
-      };
-      401: components["responses"]["UnauthorizedError"];
-    };
-  };
-  /**
-   * Retrieve an Item
-   * @description Retrieve a single debates item by unique identifier.
-   */
-  readSingleItemsDebates: {
-    parameters: {
-      query?: {
-        fields?: components["parameters"]["Fields"];
-        meta?: components["parameters"]["Meta"];
-        version?: components["parameters"]["Version"];
-      };
-      path: {
-        /** @description Index of the item. */
-        id: number | string;
-      };
-    };
-    responses: {
-      /** @description Successful request */
-      200: {
-        content: {
-          "application/json": {
-            data?: components["schemas"]["ItemsDebates"];
-          };
-        };
-      };
-      401: components["responses"]["UnauthorizedError"];
-      404: components["responses"]["NotFoundError"];
-    };
-  };
 }
 
 
+export interface ItemsArguments {
+  id?: number;
+  status?: string;
+  user_created?: string;
+  date_created?: string;
+  user_updated?: string;
+  date_updated?: string;
+  argument?: string;
+  parent?: number | null;
+  is_objection?: boolean;
+  vote_score?: number;
+  debate?: number;
+  sources?: any;
+}
+
+export interface ItemsDebates {
+  id?: number;
+  status?: string;
+  user_created?: string;
+  date_created?: string;
+  user_updated?: string;
+  date_updated?: string;
+  topic?: string;
+  intro?: string;
+  type?: string;
+  question?: string;
+  claim?: string;
+  tags?: any;
+  arguments?: any;
+}
+
+export interface ItemsSources {
+  id?: number;
+  status?: string;
+  user_created?: string;
+  date_created?: string;
+  url?: string;
+  quote?: string;
+  argument_id?: number;
+}
+
+export interface ItemsVotes {
+  id?: number;
+  user_created?: string;
+  date_updated?: string;
+  vote?: number;
+  argument_id?: number;
+}
+
 export type Schema = {
-  votes: components["schemas"]["ItemsVotes"][];
-  claims: components["schemas"]["ItemsClaims"][];
-  debates: components["schemas"]["ItemsDebates"][];
+  arguments: ItemsArguments[];
+  debates: ItemsDebates[];
+  sources: ItemsSources[];
+  votes: ItemsVotes[];
 };

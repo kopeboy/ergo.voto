@@ -3,7 +3,6 @@
 	import { auth } from '$lib/stores/auth';
 	import { getDebates } from '$lib/api/debates';
 	import DebateForm from '$lib/components/DebateForm.svelte';
-	import RichTextDisplay from '$lib/components/RichTextDisplay.svelte';
 	import type { Debate } from '$lib/types';
 
 	let debates: Debate[] = [];
@@ -48,20 +47,13 @@
 					Esplora i dibattiti attivi e partecipa alla discussione strutturata.
 				</p>
 			</div>
-			{#if canCreateDebate && !showDebateForm}
-				<button class="btn-create-debate" on:click={() => showDebateForm = true}>
-					+ Crea Dibattito
+			{#if canCreateDebate}
+				<button class="btn-create-debate" onclick={() => showDebateForm = true}>
+					+ Crea dibattito
 				</button>
 			{/if}
 		</div>
 	</header>
-
-	{#if showDebateForm}
-		<DebateForm 
-			onSuccess={handleDebateCreated}
-			onCancel={() => showDebateForm = false}
-		/>
-	{/if}
 
 	{#if loading}
 		<div class="loading">
@@ -80,21 +72,47 @@
 		<div class="debates-grid">
 			{#each debates as debate (debate.id)}
 				<a href="/debate/{debate.id}" class="debate-card">
-					<h2 class="debate-title">{debate.title}</h2>
-					<p class="debate-question">{debate.question}</p>
-					{#if debate.description}
-						<div class="debate-description">
-							<RichTextDisplay content={debate.description} />
-						</div>
+					<h2 class="debate-title">{debate.topic}</h2>
+					{#if debate.type === 'question' && debate.question}
+						<p class="debate-question">{debate.question}</p>
+					{:else if debate.type === 'claim' && debate.claim}
+						<p class="debate-question">{debate.claim}</p>
+					{/if}
+					{#if debate.intro}
+						<p class="debate-description">{debate.intro}</p>
 					{/if}
 					<div class="debate-footer">
 						<span class="debate-status">{debate.status}</span>
+						{#if debate.type}
+							<span class="debate-type">{debate.type}</span>
+						{/if}
 					</div>
 				</a>
 			{/each}
 		</div>
 	{/if}
 </div>
+
+{#if showDebateForm}
+	<!-- Modal backdrop -->
+	<div 
+		class="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4"
+		onclick={(e) => {
+			if (e.target === e.currentTarget) {
+				showDebateForm = false;
+			}
+		}}
+		role="dialog"
+		aria-modal="true"
+	>
+		<div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto" onclick={(e) => e.stopPropagation()}>
+			<DebateForm 
+				onSuccess={handleDebateCreated}
+				onCancel={() => showDebateForm = false}
+			/>
+		</div>
+	</div>
+{/if}
 
 <style>
 	.debates-container {
@@ -130,7 +148,7 @@
 	}
 
 	.btn-create-debate {
-		background: #3b82f6;
+		background: #eab308;
 		color: white;
 		padding: 0.75rem 1.5rem;
 		border: none;
@@ -144,8 +162,8 @@
 	}
 
 	.btn-create-debate:hover {
-		background: #2563eb;
-		box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+		background: #ca8a04;
+		box-shadow: 0 4px 8px rgba(234, 179, 8, 0.3);
 	}
 
 	@media (max-width: 768px) {
@@ -246,6 +264,16 @@
 		border-radius: 0.25rem;
 		background: #dbeafe;
 		color: #1e40af;
+	}
+
+	.debate-type {
+		font-size: 0.75rem;
+		font-weight: 500;
+		text-transform: uppercase;
+		padding: 0.25rem 0.5rem;
+		border-radius: 0.25rem;
+		background: #fef3c7;
+		color: #92400e;
 	}
 
 	@media (max-width: 768px) {

@@ -1,33 +1,48 @@
-export type ClaimType = 'pro' | 'contro' | 'fatto' | 'neutro';
-
-export type VoteDimension = 'accuracy' | 'relevance';
-
-export interface Vote {
-	accuracy: number;
-	relevance: number;
+export interface Source {
+	id: number;
+	url: string;
+	quote?: string;
+	argument_id?: number;
+	status: 'published' | 'flagged';
+	user_created?: string;
+	date_created?: string;
 }
 
-export interface Claim {
-	id: string;
-	debate_id: string;
-	content: string;
-	type: ClaimType;
-	parent_id: string | null;
-	votes: Vote;
-	children?: Claim[];
+export interface Vote {
+	id: number;
+	argument_id: number;
+	vote: number;
+	user_created: string;
+	date_updated?: string;
+}
+
+export interface Argument {
+	id: number;
+	argument: string;
+	debate: number;
+	parent: number | null;
+	is_objection: boolean;
+	vote_score: number;
+	status: 'draft' | 'published' | 'archived';
+	user_created?: string;
+	date_created?: string;
 	user_updated?: string;
 	date_updated?: string;
-	status?: 'draft' | 'published' | 'flagged';
-	citations?: string[]; // IDs delle claims/fatti citati per sillogismi
-	is_ergo?: boolean; // True se questa claim è una deduzione logica
+	sources?: Source[];
+	children?: Argument[];
 }
 
 export interface Debate {
-	id: string;
-	title: string;
-	description?: string;
-	question: string;
-	status: 'draft' | 'published' | 'closed';
+	id: number;
+	topic: string;
+	intro?: string;
+	type: 'claim' | 'question';
+	question?: string;
+	claim?: string;
+	tags?: string[];
+	status: 'draft' | 'published' | 'archived';
+	user_created?: string;
+	date_created?: string;
 	user_updated?: string;
 	date_updated?: string;
 }

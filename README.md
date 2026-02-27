@@ -39,7 +39,7 @@ Vai su http://localhost:8055 e crea il primo utente amministratore.
 
 ### 4. Crea le tabelle in Directus
 
-Segui la guida in `DIRECTUS_SETUP.md` per creare manualmente le collezioni `claims` e `votes` tramite l'interfaccia di Directus.
+Segui la guida in `DIRECTUS_SETUP.md` per creare manualmente le collezioni `arguments`, `debates`, `sources` e `votes` tramite l'interfaccia di Directus.
 
 Dopo aver creato le collezioni, genera i tipi TypeScript:
 
@@ -47,7 +47,20 @@ Dopo aver creato le collezioni, genera i tipi TypeScript:
 npm run types:generate
 ```
 
-### 5. Avvia il dev server
+### 5. Applica il trigger PostgreSQL per vote_score
+
+Per performance ottimali, applica il trigger che aggiorna automaticamente `vote_score` quando i voti cambiano:
+
+```sh
+docker exec ergovoto-database-1 psql -U directus -d directus -c "$(cat database/triggers/update_argument_vote_score.sql)"
+```
+
+Questo trigger:
+- Aggiorna automaticamente `arguments.vote_score` quando un voto viene creato/modificato/eliminato
+- Evita di calcolare `SUM(vote)` ad ogni query, migliorando le performance
+- Inizializza i valori esistenti
+
+### 6. Avvia il dev server
 
 ```sh
 npm run dev

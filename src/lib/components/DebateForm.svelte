@@ -5,33 +5,34 @@
 	export let onSuccess: () => void;
 	export let onCancel: () => void;
 
-	let title = '';
+	let topic = '';
+	let type: 'claim' | 'question' = 'claim';
+	let intro = '';
 	let question = '';
-	let description = '';
+	let claim = '';
 	let loading = false;
 	let error: string | null = null;
 
-	const MIN_TITLE_LENGTH = 5;
-	const MAX_TITLE_LENGTH = 200;
+	const MIN_TOPIC_LENGTH = 5;
+	const MAX_TOPIC_LENGTH = 200;
 	const MIN_QUESTION_LENGTH = 10;
 	const MAX_QUESTION_LENGTH = 500;
-	const MAX_DESCRIPTION_LENGTH = 2000;
+	const MIN_CLAIM_LENGTH = 10;
+	const MAX_CLAIM_LENGTH = 500;
+	const MAX_INTRO_LENGTH = 2000;
 
-	$: titleLength = title.length;
+	$: topicLength = topic.length;
 	$: questionLength = question.length;
-	$: descriptionLength = getTextLength(description);
+	$: claimLength = claim.length;
+	$: introLength = intro.length;
 
-	function getTextLength(html: string): number {
-		const div = document.createElement('div');
-		div.innerHTML = html;
-		return div.textContent?.length || 0;
-	}
 	$: isValid = 
-		title.trim().length >= MIN_TITLE_LENGTH && 
-		title.length <= MAX_TITLE_LENGTH &&
-		question.trim().length >= MIN_QUESTION_LENGTH && 
-		question.length <= MAX_QUESTION_LENGTH &&
-		descriptionLength <= MAX_DESCRIPTION_LENGTH;
+		topic.trim().length >= MIN_TOPIC_LENGTH && 
+		topic.length <= MAX_TOPIC_LENGTH &&
+		(type === 'question' 
+			? question.trim().length >= MIN_QUESTION_LENGTH && question.length <= MAX_QUESTION_LENGTH
+			: claim.trim().length >= MIN_CLAIM_LENGTH && claim.length <= MAX_CLAIM_LENGTH) &&
+		intro.length <= MAX_INTRO_LENGTH;
 
 	async function handleSubmit() {
 		if (!isValid) return;
@@ -40,19 +41,20 @@
 		error = null;
 
 		try {
-			const cleanDescription = description.trim();
-			const isEmpty = cleanDescription === '' || cleanDescription === '<p></p>';
-			
 			await createDebate({
-				title: title.trim(),
-				question: question.trim(),
-				description: isEmpty ? undefined : cleanDescription
+				topic: topic.trim(),
+				type,
+				intro: intro.trim() || undefined,
+				question: type === 'question' ? question.trim() : undefined,
+				claim: type === 'claim' ? claim.trim() : undefined
 			});
 
 			// Reset form
-			title = '';
+			topic = '';
+			type = 'claim';
+			intro = '';
 			question = '';
-			description = '';
+			claim = '';
 			
 			onSuccess();
 		} catch (err) {
@@ -64,61 +66,97 @@
 </script>
 
 <div class="debate-form">
-	<h3 class="form-title">Crea Nuovo Dibattito</h3>
+	<h3 class="form-title">Crea nuovo dibattito</h3>
 
 	<form on:submit|preventDefault={handleSubmit}>
 		<div class="form-group">
 			<div class="flex justify-between items-center mb-2">
-				<span class="text-sm font-medium text-gray-700">Titolo</span>
-				<span class="char-count" class:warning={titleLength > MAX_TITLE_LENGTH * 0.9}>
-					{titleLength}/{MAX_TITLE_LENGTH}
+				<span class="text-sm font-medium text-gray-700">Argomento</span>
+				<span class="char-count" class:warning={topicLength > MAX_TOPIC_LENGTH * 0.9}>
+					{topicLength}/{MAX_TOPIC_LENGTH}
 				</span>
 			</div>
 			<input
 				type="text"
-				bind:value={title}
+				bind:value={topic}
 				placeholder="Es: Cambiamento Climatico"
-				maxlength={MAX_TITLE_LENGTH}
+				maxlength={MAX_TOPIC_LENGTH}
 				disabled={loading}
 				required
 				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 			/>
-			{#if title.trim().length > 0 && title.trim().length < MIN_TITLE_LENGTH}
-				<p class="validation-error">Minimo {MIN_TITLE_LENGTH} caratteri</p>
+			{#if topic.trim().length > 0 && topic.trim().length < MIN_TOPIC_LENGTH}
+				<p class="validation-error">minimo {MIN_TOPIC_LENGTH} caratteri</p>
 			{/if}
 		</div>
 
 		<div class="form-group">
+			<label for="debate-type" class="text-sm font-medium text-gray-900 mb-2 block text-left">Tipo</label>
+			<select id="debate-type" bind:value={type} class="w-full px-3 py-2 border border-gray-300 rounded-md">
+				<option value="claim">Tesi</option>
+				<option value="question">Domanda</option>
+			</select>
+		</div>
+
+		{#if type === 'question'}
+			<div class="form-group">
+				<div class="flex justify-between items-center mb-2">
+					<span class="text-sm font-medium text-gray-700">Domanda</span>
+					<span class="char-count" class:warning={questionLength > MAX_QUESTION_LENGTH * 0.9}>
+						{questionLength}/{MAX_QUESTION_LENGTH}
+					</span>
+				</div>
+				<input
+					type="text"
+					bind:value={question}
+					placeholder="Es: Il cambiamento climatico è causato dall'uomo?"
+					maxlength={MAX_QUESTION_LENGTH}
+					disabled={loading}
+					required
+					class="w-full px-3 py-2 border border-gray-300 rounded-md"
+				/>
+				{#if question.trim().length > 0 && question.trim().length < MIN_QUESTION_LENGTH}
+					<p class="validation-error">Minimo {MIN_QUESTION_LENGTH} caratteri</p>
+				{/if}
+			</div>
+		{:else}
+			<div class="form-group">
+				<div class="flex justify-between items-center mb-2">
+					<span class="text-sm font-medium text-gray-700">Tesi</span>
+					<span class="char-count" class:warning={claimLength > MAX_CLAIM_LENGTH * 0.9}>
+						{claimLength}/{MAX_CLAIM_LENGTH}
+					</span>
+				</div>
+				<input
+					type="text"
+					bind:value={claim}
+					placeholder="Es: Il cambiamento climatico è causato principalmente dall'attività umana"
+					maxlength={MAX_CLAIM_LENGTH}
+					disabled={loading}
+					required
+					class="w-full px-3 py-2 border border-gray-300 rounded-md"
+				/>
+				{#if claim.trim().length > 0 && claim.trim().length < MIN_CLAIM_LENGTH}
+					<p class="validation-error">Minimo {MIN_CLAIM_LENGTH} caratteri</p>
+				{/if}
+			</div>
+		{/if}
+
+		<div class="form-group">
 			<div class="flex justify-between items-center mb-2">
-				<span class="text-sm font-medium text-gray-700">Domanda del Dibattito</span>
-				<span class="char-count" class:warning={questionLength > MAX_QUESTION_LENGTH * 0.9}>
-					{questionLength}/{MAX_QUESTION_LENGTH}
+				<span class="text-sm font-medium text-gray-700">Introduzione (opzionale)</span>
+				<span class="char-count" class:warning={introLength > MAX_INTRO_LENGTH * 0.9}>
+					{introLength}/{MAX_INTRO_LENGTH}
 				</span>
 			</div>
 			<textarea
-				bind:value={question}
-				placeholder="Es: Il cambiamento climatico è causato principalmente dall'attività umana?"
-				rows="3"
-				maxlength={MAX_QUESTION_LENGTH}
+				bind:value={intro}
+				placeholder="Aggiungi contesto o dettagli sul dibattito..."
+				rows="4"
+				maxlength={MAX_INTRO_LENGTH}
+				class="w-full px-3 py-2 border border-gray-300 rounded-md"
 				disabled={loading}
-				required
-				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
 			></textarea>
-			{#if question.trim().length > 0 && question.trim().length < MIN_QUESTION_LENGTH}
-				<p class="validation-error">Minimo {MIN_QUESTION_LENGTH} caratteri</p>
-			{/if}
-		</div>
-
-		<div class="form-group">
-			<div class="flex justify-between items-center mb-2">
-				<span class="text-sm font-medium text-gray-700">Descrizione (opzionale)</span>
-			</div>
-			<RichTextEditor
-				bind:content={description}
-				placeholder="Descrizione del contesto e obiettivi del dibattito..."
-				maxLength={MAX_DESCRIPTION_LENGTH}
-				disabled={loading}
-			/>
 		</div>
 
 		{#if error}
@@ -132,7 +170,7 @@
 				Annulla
 			</button>
 			<button type="submit" class="btn-submit" disabled={!isValid || loading}>
-				{loading ? 'Creazione...' : 'Crea Dibattito'}
+				{loading ? 'Creazione...' : 'Crea dibattito'}
 			</button>
 		</div>
 	</form>
@@ -214,7 +252,7 @@
 
 	.btn-submit {
 		padding: 0.625rem 1.25rem;
-		background: #3b82f6;
+		background: hsl(var(--primary));
 		border: none;
 		color: white;
 		border-radius: 6px;
